@@ -602,6 +602,7 @@ namespace GrpcClient
                 var start = DateTime.UtcNow;
                 try
                 {
+                    ReceivedDateTime(start, start, connectionId);
                     await call.RequestStream.WriteAsync(request);
                     if (!await call.ResponseStream.MoveNext())
                     {
@@ -609,7 +610,6 @@ namespace GrpcClient
                     }
 
                     var end = DateTime.UtcNow;
-                    ReceivedDateTime(start, end, connectionId);
                 }
                 catch (RpcException ex) when (ex.StatusCode == StatusCode.Cancelled && cts.IsCancellationRequested)
                 {
