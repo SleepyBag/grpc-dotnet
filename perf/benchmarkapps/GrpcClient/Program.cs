@@ -261,12 +261,16 @@ namespace GrpcClient
             var newTotalRequests = 0;
             var min = int.MaxValue;
             var max = 0;
-            BenchmarksEventSource.Register("grpc/rps/min;http/rps/min", Operations.Min, Operations.Sum, "Min RPS", "RPS: max", "n0");
+            BenchmarksEventSource.Register("grpc/rps/min;http/rps/min", Operations.Min, Operations.Sum, "Min RPS among connections", "connection RPS: min", "n0");
+            BenchmarksEventSource.Register("grpc/rps/connectionmax;http/rps/connectionmax", Operations.Max, Operations.Sum, "Max RPS among connections", "connection RPS: max", "n0");
+            BenchmarksEventSource.Register("grpc/rps/median;http/rps/median", Operations.Median, Operations.Sum, "Median RPS among connections", "connection RPS: median", "n0");
             for (var i = 0; i < _requestsPerConnection.Count; i++)
             {
                 newTotalRequests += _requestsPerConnection[i];
 
                 BenchmarksEventSource.Measure("grpc/rps/min;http/rps/min", (double)_requestsPerConnection[i] / _workTimer.ElapsedMilliseconds);
+                BenchmarksEventSource.Measure("grpc/rps/connectionmax;http/rps/connectionmax", (double)_requestsPerConnection[i] / _workTimer.ElapsedMilliseconds);
+                BenchmarksEventSource.Measure("grpc/rps/median;http/rps/median", (double)_requestsPerConnection[i] / _workTimer.ElapsedMilliseconds);
                 if (_requestsPerConnection[i] > max)
                 {
                     max = _requestsPerConnection[i];
