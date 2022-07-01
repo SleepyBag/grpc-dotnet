@@ -296,10 +296,12 @@ namespace GrpcClient
             Log($"Total errors: {errors}");
 
             BenchmarksEventSource.Register("grpc/rps/max;http/rps/mean", Operations.Max, Operations.Sum, "Max RPS", "RPS: max", "n0");
+            BenchmarksEventSource.Register("grpc/rps/min;http/rps/min", Operations.Min, Operations.Sum, "Min RPS", "RPS: max", "n0");
             BenchmarksEventSource.Register("grpc/requests;http/requests", Operations.Max, Operations.Sum, "Requests", "Total number of requests", "n0");
             BenchmarksEventSource.Register("grpc/errors/badresponses;http/requests/badresponses", Operations.Max, Operations.Sum, "Bad responses", "Non-2xx or 3xx responses", "n0");
 
             BenchmarksEventSource.Measure("grpc/rps/max;http/rps/mean", rps);
+            BenchmarksEventSource.Measure("grpc/rps/min;http/rps/min", rps);
             BenchmarksEventSource.Measure("grpc/requests;http/requests", requestDelta);
             BenchmarksEventSource.Measure("grpc/errors/badresponses;http/requests/badresponses", errors);
 
