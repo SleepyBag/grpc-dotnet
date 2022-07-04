@@ -205,6 +205,9 @@ namespace GrpcClient
                     case "pingpongstreaming":
                         callFactory = (connectionId, streamId) => PingPongStreaming(_cts, connectionId, streamId);
                         break;
+                    case "limitedpingpongstreaming":
+                        callFactory = (connectionId, streamId) => LimitedPingPongStreaming(_cts, connectionId, streamId);
+                        break;
                     default:
                         throw new Exception($"Scenario '{_options.Scenario}' is not a known scenario.");
                 }
@@ -635,6 +638,58 @@ namespace GrpcClient
 
             Log($"{connectionId}: Completing request stream");
             await call.RequestStream.CompleteAsync();
+
+            Log(connectionId, streamId, $"Finished {_options.Scenario}");
+        }
+
+        private static async Task LimitedPingPongStreaming(CancellationTokenSource cts, int connectionId, int streamId)
+        {
+            Log(connectionId, streamId, $"Starting {_options.Scenario}");
+
+            var client = new BenchmarkService.BenchmarkServiceClient(_channels[connectionId]);
+            var request = CreateSimpleRequest();
+
+            while (!cts.IsCancellationRequested)
+            {
+                if (StartCall())
+                {
+                    break;
+                }
+
+                var start = DateTime.UtcNow;
+                try
+                {
+                    using var call = client.StreamingCall(CreateCallOptions());
+                    for (int i = 0; i != 100; ++i)
+                    {
+                        await call.RequestStream.WriteAsync(request);
+                        if (!await call.ResponseStream.MoveNext())
+                        {
+                            throw new Exception("Unexpected end of stream.");
+                        }
+
+                        var end = DateTime.UtcNow;
+                        ReceivedDateTime(start, end, connectionId);
+                    }
+
+                    Log($"{connectionId}: Completing request stream");
+                    await call.RequestStream.CompleteAsync();
+                }
+                catch (RpcException ex) when (ex.StatusCode == StatusCode.Cancelled && cts.IsCancellationRequested)
+                {
+                    // Handle expected error from canceling call
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    var end = DateTime.UtcNow;
+                    ReceivedDateTime(start, end, connectionId);
+
+                    HandleError(connectionId);
+
+                    Log(connectionId, streamId, $"Error message: {ex}");
+                }
+            }
 
             Log(connectionId, streamId, $"Finished {_options.Scenario}");
         }
