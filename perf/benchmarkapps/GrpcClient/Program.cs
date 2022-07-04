@@ -660,7 +660,7 @@ namespace GrpcClient
                 try
                 {
                     using var call = client.StreamingCall(CreateCallOptions());
-                    for (int i = 0; i != 1; ++i)
+                    for (int i = 0; i != 10; ++i)
                     {
                         await call.RequestStream.WriteAsync(request);
                         if (!await call.ResponseStream.MoveNext())
